@@ -17,9 +17,7 @@ type Dorm struct {
 	DormLatitude  float32 `json:"dorm_latitude";gorm:"column:dorm_latitude;"`
 }
 
-
-
-func (u * Dorm) getDb() *gorm.DB {
+func (u *Dorm) getDb() *gorm.DB {
 	if u.db == nil {
 		return db.GetDB()
 	}

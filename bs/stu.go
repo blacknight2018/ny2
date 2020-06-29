@@ -36,9 +36,11 @@ func (u *Stu) getDb() *gorm.DB {
 	}
 	return u.db
 }
+
 func (u *Stu) setDb(d *gorm.DB) {
 	u.db = d
 }
+
 func (u *Stu) SelectByOpenId() bool {
 	sql := `select id ,open_id,nick_name,mobile,avatar_url from user where open_id = ?;`
 	r := u.getDb().Raw(sql, u.Us.OpenId).Scan(&u.Us).Error
@@ -196,7 +198,7 @@ func (u *Stu) InsertMsgDetail(md *entity.Detail) bool {
 	return err == nil
 }
 
-func (u *Stu) QueryStuMsg(stuId int64, limit int) (bool, []entity.Msg) {
+func (u *Stu) SelectStuMsg(stuId int64, limit int) (bool, []entity.Msg) {
 	var m []entity.Msg
 	sql := `SELECT
 	*
@@ -204,7 +206,7 @@ FROM
 	msg
 WHERE
 	(
-		(sender_stu = ? && recipient_stu = ?) || (sender_stu = ? && recipient_stu = ?)
+		(sender_stu = ? && recipient_stu = ?)
 	) && (
 		id NOT IN (
 			SELECT
@@ -215,5 +217,69 @@ WHERE
 				stu_id = ? && is_read = 1
 		)
 	) limit ?`
-	return nil == u.getDb().Raw(sql, u.StuId, stuId, stuId, u.StuId, u.StuId, limit).Scan(&m).Error, m
+	return nil == u.getDb().Raw(sql, stuId, u.StuId, u.StuId, limit).Scan(&m).Error, m
+}
+
+// 是否有没接受的消息
+func (u *Stu) HasUnReadMsg() bool {
+	sql := `SELECT
+	*
+FROM
+	msg
+WHERE
+	id NOT IN (
+		SELECT
+			msg_id
+		FROM
+			msgdetail
+		WHERE
+			stu_id = ? && is_read = 1
+	) && recipient_stu = ?`
+	err := u.getDb().Raw(sql, u.StuId, u.StuId).Error
+	return err == nil
+}
+
+// 获取用户收到的未读的消
+// 一个用户只返回最新的一条
+func (u *Stu) SelectNewestUnreadMsg() (bool, []entity.Msg) {
+	var m []entity.Msg
+	sql := `SELECT
+	*
+FROM
+	msg
+WHERE
+	id IN (
+		SELECT
+			max(id) AS id
+		FROM
+			msg
+		WHERE
+			id NOT IN (
+				SELECT
+					msg_id
+				FROM
+					msgdetail
+				WHERE
+					stu_id = ? && is_read = 1
+			) && recipient_stu = ?
+		GROUP BY
+			sender_stu
+	)`
+	err := u.getDb().Raw(sql, u.StuId, u.StuId).Scan(&m).Error
+	return nil == err, m
+}
+
+// 获取当前学生相关订单的总数量
+// 包括我发出的和我接的订单
+func (u *Stu) SelectOrderLength() (bool, int64) {
+	sql := "select count(*) as len from `order` where stu_id = ? || recv_stu = ?"
+	var count int64
+	return nil == u.getDb().Raw(sql, u.StuId, u.StuId).Scan(&count).Error, count
+}
+
+// 获取当前学生的订单
+func (u *Stu) SelectOrderByStuId(limit int64, offset int64) (bool, []entity.Order) {
+	var o []entity.Order
+	sql := "select * from `order` where stu_id = ? || recv_stu = ? order by id  desc limit ? offset ?"
+	return nil == u.getDb().Raw(sql).Scan(&o).Error, o
 }

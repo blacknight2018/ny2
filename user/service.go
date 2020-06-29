@@ -19,7 +19,7 @@ func login(avatarUrl string, nickName string, openId string) bool {
 func getStuMsg(stuIdA int64, stuIdB int64, limit int) (bool, string) {
 	var u bs.Stu
 	u.StuId = &stuIdA
-	if ok, data := u.QueryStuMsg(stuIdB, limit); ok {
+	if ok, data := u.SelectStuMsg(stuIdB, limit); ok {
 		go func() {
 			for _, d := range data {
 				var md entity.Detail
@@ -107,6 +107,57 @@ func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comm
 
 }
 
+func hasNewUnreadMsg(openId string) bool {
+	var u bs.Stu
+	u.Us.OpenId = openId
+	r := u.SelectByOpenId()
+	if !r {
+		return false
+	}
+	return u.HasUnReadMsg()
+}
+
+func getUnreadNewestMsg(openId string) (bool, string) {
+	var u bs.Stu
+	u.Us.OpenId = openId
+	r := u.SelectByOpenId()
+	if !r {
+		return false, utils.EmptyString
+	}
+	if ok, data := u.SelectNewestUnreadMsg(); ok {
+
+		//加入新的字段
+		type t struct {
+			entity.Msg
+			NickName     string `json:"nick_name"`
+			SenderAvatar string `json:"sender_avatar"`
+		}
+		var tmp []t
+		for _, v := range data {
+			var u bs.Stu
+			u.StuId = &v.SenderStu
+			u.SelectByStuId()
+
+			var t1 t
+			t1.RecipientStu = v.RecipientStu
+			t1.Id = v.Id
+			t1.Type = v.Type
+			t1.Content = v.Content
+			t1.SenderStu = v.SenderStu
+			t1.CreateTime = v.CreateTime
+			t1.SenderAvatar = u.Us.AvatarUrl
+			t1.NickName = u.Us.NickName
+
+			tmp = append(tmp, t1)
+		}
+
+		if bytes, err := json.Marshal(tmp); err == nil {
+			return true, string(bytes)
+		}
+	}
+	return false, utils.EmptyString
+}
+
 func getSimpleInfoByOpenId(openId string) (bool, string) {
 	var u bs.Stu
 	u.Us.OpenId = openId
@@ -138,4 +189,17 @@ func getSimpleInfoByOpenId(openId string) (bool, string) {
 		return true, string(bytes)
 	}
 	return false, utils.EmptyString
+}
+
+func getStuOrder(stuId int64, limit int64, offset int64) (bool, string) {
+	var u bs.Stu
+	u.StuId = &stuId
+	ok, data := u.SelectOrderByStuId(limit, offset)
+	if ok {
+		if bytes, err := json.Marshal(data); err == nil {
+			return true, string(bytes)
+		}
+	}
+	return false, utils.EmptyString
+
 }

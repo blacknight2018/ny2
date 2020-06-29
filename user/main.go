@@ -14,9 +14,10 @@ import (
 )
 
 func Register(engine *gin.Engine) {
-	o := engine.Group("order")
+
+	u := engine.Group("user")
 	{
-		o.POST("", func(context *gin.Context) {
+		u.POST("order", func(context *gin.Context) {
 			if ok, data := utils.GetRawData(context); ok {
 				orderType := gjson.Get(data, "type").Int()
 
@@ -45,9 +46,9 @@ func Register(engine *gin.Engine) {
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
-	}
-	u := engine.Group("user")
-	{
+		u.GET("order", func(context *gin.Context) {
+
+		})
 		u.POST("code", func(context *gin.Context) {
 			if ok, data := utils.GetRawData(context); ok {
 				code := gjson.Get(data, "code").String()
@@ -131,6 +132,14 @@ func Register(engine *gin.Engine) {
 				if ok, data := getStuMsg(int64(stuIdAInt), int64(stuIdBInt), 10); ok {
 					gerr.SetResponse(context, gerr.Ok, &data)
 				}
+				return
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
+		u.GET("msg/top", func(context *gin.Context) {
+			openId := context.Query("open_id")
+			if ok, data := getUnreadNewestMsg(openId); ok {
+				gerr.SetResponse(context, gerr.Ok, &data)
 				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
