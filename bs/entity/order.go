@@ -46,3 +46,7 @@ func (u *Order) SelectById() bool {
 	err := u.getDb().Raw(sql, u.Id).Scan(&u).Error
 	return err == nil
 }
+
+func (u *Order) Update() bool {
+	return nil == u.getDb().Table("order").Save(&u).Error
+}

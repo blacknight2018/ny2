@@ -5,6 +5,7 @@ import (
 	"ny2/bs"
 	"ny2/bs/entity"
 	"ny2/utils"
+	"ny2/wxapi"
 	"strconv"
 	"time"
 )
@@ -301,4 +302,23 @@ func getOrderDetail(orderId int64) (bool, string) {
 		}
 	}
 	return false, utils.EmptyString
+}
+
+// 修改订单的接收者
+func setOrderRecv(orderId int64, stuId int64) bool {
+	var o entity.Order
+	o.Id = orderId
+	r := o.SelectById()
+	if r {
+		o.RecvStu = &stuId
+		r = o.Update()
+
+		//发送通知
+		var u bs.Stu
+		u.StuId = &o.StuId
+		u.SelectByStuId()
+		wxapi.SendOrderNotify(u.Us.OpenId, o.TemplateId, u.Dm.DormName, orderId, o.Comment)
+		return r
+	}
+	return false
 }

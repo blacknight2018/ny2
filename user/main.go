@@ -17,6 +17,18 @@ func Register(engine *gin.Engine) {
 
 	u := engine.Group("user")
 	{
+		u.POST("recv", func(context *gin.Context) {
+
+			if ok, data := utils.GetRawData(context); ok {
+				orderId := gjson.Get(data, "order_id").Int()
+				stuId := gjson.Get(data, "stu_id").Int()
+				if setOrderRecv(orderId, stuId) {
+					gerr.SetResponse(context, gerr.Ok, nil)
+					return
+				}
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
 		u.POST("order", func(context *gin.Context) {
 			if ok, data := utils.GetRawData(context); ok {
 				orderType := gjson.Get(data, "type").Int()
