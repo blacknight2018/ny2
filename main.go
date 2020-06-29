@@ -28,11 +28,11 @@ func TlsHandler() gin.HandlerFunc {
 
 func main() {
 	g := gin.Default()
-	//g.Use(TlsHandler())
+	g.Use(TlsHandler())
 	dorm.Register(g)
 	school.Register(g)
 	user.Register(g)
-	g.Run(":80")
-	//g.RunTLS(":443", "static/fullchain.crt", "static/private.pem")
+	//g.Run(":80")
+	g.RunTLS(":443", "static/fullchain.crt", "static/private.pem")
 	return
 }

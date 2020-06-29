@@ -24,7 +24,7 @@ func login(avatarUrl string, nickName string, openId string) (bool, string) {
 	}
 	var data t
 	data.OpenId = s.Us.OpenId
-	data.StuId = *s.StuId
+	data.StuId = s.StuId
 	if bytes, err := json.Marshal(data); err == nil && r {
 		return true, string(bytes)
 	}
@@ -33,7 +33,7 @@ func login(avatarUrl string, nickName string, openId string) (bool, string) {
 }
 func getStuMsg(stuIdA int64, stuIdB int64, limit int) (bool, string) {
 	var u bs.Stu
-	u.StuId = &stuIdA
+	u.StuId = stuIdA
 	if ok, data := u.SelectStuMsg(stuIdB, limit); ok {
 		go func() {
 			for _, d := range data {
@@ -84,7 +84,7 @@ func putInfoByOpenId(openId string, dormId int64, stuNumber string, stuMobile st
 	if !r {
 		return false
 	}
-	u.DormId = &dormId
+	u.DormId = dormId
 	u.StuNumber = stuNumber
 	u.Us.Mobile = stuMobile
 	u.DormRoom = room
@@ -92,7 +92,7 @@ func putInfoByOpenId(openId string, dormId int64, stuNumber string, stuMobile st
 }
 func getSimpleInfoByStuId(stuId int64) (bool, string) {
 	var u bs.Stu
-	u.StuId = &stuId
+	u.StuId = stuId
 	r := u.SelectByStuId()
 	if r == false {
 		return false, utils.EmptyString
@@ -103,7 +103,7 @@ func getSimpleInfoByStuId(stuId int64) (bool, string) {
 func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comment string, templateId string) bool {
 	var o entity.Order
 	var s bs.Stu
-	s.StuId = &stuId
+	s.StuId = stuId
 	r := s.SelectByStuId()
 	if r == false {
 		return false
@@ -150,7 +150,7 @@ func getUnreadNewestMsg(openId string) (bool, string) {
 		var tmp []t
 		for _, v := range data {
 			var u bs.Stu
-			u.StuId = &v.SenderStu
+			u.StuId = v.SenderStu
 			u.SelectByStuId()
 
 			var t1 t
@@ -181,11 +181,11 @@ func getSimpleInfoByOpenId(openId string) (bool, string) {
 		return false, utils.EmptyString
 	}
 	type t struct {
-		DormId    *int64 `json:"dorm_id"`
+		DormId    int64  `json:"dorm_id"`
 		Mobile    string `json:"mobile"`
 		Room      string `json:"room"`
-		SchoolId  *int64 `json:"school_id"`
-		StuId     *int64 `json:"stu_id"`
+		SchoolId  int64  `json:"school_id"`
+		StuId     int64  `json:"stu_id"`
 		StuNumber string `json:"stu_number"`
 		NickName  string `json:"nick_name"`
 		AvatarUrl string `json:"avatar_url"`
@@ -209,7 +209,7 @@ func getSimpleInfoByOpenId(openId string) (bool, string) {
 // 获取与stu相关的订单数量
 func getStuOrderSize(stuId int64) (bool, string) {
 	var u bs.Stu
-	u.StuId = &stuId
+	u.StuId = stuId
 	if ok, size := u.SelectOrderLength(); ok {
 		if bytes, err := json.Marshal(size); err == nil {
 			return true, string(bytes)
@@ -222,7 +222,7 @@ func getStuOrderSize(stuId int64) (bool, string) {
 // 获取与stu相关的订单详细信息
 func getStuOrder(stuId int64, limit int64, offset int64) (bool, string) {
 	var u bs.Stu
-	u.StuId = &stuId
+	u.StuId = stuId
 	ok, data := u.SelectOrderByStuId(limit, offset)
 	if ok {
 		if bytes, err := json.Marshal(data); err == nil {
@@ -235,7 +235,7 @@ func getStuOrder(stuId int64, limit int64, offset int64) (bool, string) {
 // 获取与stu相关的订单简略信息
 func getStuPreOrder(stuId int64, limit int64, offset int64) (bool, string) {
 	var u bs.Stu
-	u.StuId = &stuId
+	u.StuId = stuId
 	ok, data := u.SelectOrderByStuId(limit, offset)
 
 	type t struct {
@@ -244,11 +244,11 @@ func getStuPreOrder(stuId int64, limit int64, offset int64) (bool, string) {
 		FinishTime *time.Time `json:"finish_time"`
 		Price      string     `json:"price"`
 		Type       string     `json:"type"`
-		StuId      *int64     `json:"stu_id"`
+		StuId      int64      `json:"stu_id"`
 		NickName   string     `json:"nick_name"`
 		Dorm       string     `json:"dorm"`
 		Cancel     bool       `json:"cancel"`
-		RecvStu    *int64     `json:"recv_stu"`
+		RecvStu    int64      `json:"recv_stu"`
 	}
 	var tmp []t
 	for _, v := range data {
@@ -258,7 +258,9 @@ func getStuPreOrder(stuId int64, limit int64, offset int64) (bool, string) {
 		k.Type = v.Type
 		k.AvatarUrl = v.AvatarUrl
 		k.OrderId = v.Id
-		k.StuId = &v.StuId
+		if v.StuId != 0 {
+			k.StuId = v.StuId
+		}
 		k.Cancel = v.Cancel
 		k.RecvStu = v.RecvStu
 
@@ -291,7 +293,7 @@ func getOrderDetail(orderId int64) (bool, string) {
 	}
 	var tmp t
 	var dm bs.Dorm
-	dm.Id = &o.DormId
+	dm.Id = o.DormId
 	dm.SelectById()
 	tmp.DormName = dm.DormName
 	tmp.Order = o
@@ -310,12 +312,12 @@ func setOrderRecv(orderId int64, stuId int64) bool {
 	o.Id = orderId
 	r := o.SelectById()
 	if r {
-		o.RecvStu = &stuId
+		o.RecvStu = stuId
 		r = o.Update()
 
 		//发送通知
 		var u bs.Stu
-		u.StuId = &o.StuId
+		u.StuId = o.StuId
 		u.SelectByStuId()
 		wxapi.SendOrderNotify(u.Us.OpenId, o.TemplateId, u.Dm.DormName, orderId, o.Comment)
 		return r

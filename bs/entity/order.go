@@ -23,7 +23,7 @@ type Order struct {
 	CreateTime *time.Time `json:"create_time";gorm:"column:finish_time;"`
 	Type       string     `json:"type";gorm:"column:type;type:enum('2','1','0');NOT NULL"`
 	Comment    string     `json:"comment";gorm:"column:comment;"`
-	RecvStu    *int64     `json:"recv_stu,omitempty";gorm:"column:recv_stu;"`
+	RecvStu    int64      `json:"recv_stu,omitempty";gorm:"column:recv_stu;"`
 	SchoolId   int64      `json:"school_id";gorm:"column:school_id;NOT NULL;"`
 	DormId     int64      `json:"dorm_id";gorm:"column:dorm_id;NOT NULL;"`
 	AvatarUrl  string     `json:"avatar_url";gorm:"column:avatar_url;NOT NULL;"`

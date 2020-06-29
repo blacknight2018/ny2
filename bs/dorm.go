@@ -10,8 +10,8 @@ type Dorm struct {
 	//
 	db *gorm.DB
 
-	Id            *int64  `json:"dorm_id";gorm:"column:id"`
-	SchoolId      *int64  `json:"school_id";gorm:"column:id;"`
+	Id            int64   `json:"dorm_id";gorm:"column:id"`
+	SchoolId      int64   `json:"school_id";gorm:"column:id;"`
 	DormName      string  `json:"dorm_name";gorm:"column:dorm_name;"`
 	DormLongitude float32 `json:"dorm_longitude";gorm:"column:dorm_longitude;"`
 	DormLatitude  float32 `json:"dorm_latitude";gorm:"column:dorm_latitude;"`

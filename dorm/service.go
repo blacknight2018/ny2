@@ -11,7 +11,7 @@ import (
 func getDormOrderSize(dormId int64) (bool, string) {
 
 	var d bs.Dorm
-	d.Id = &dormId
+	d.Id = dormId
 	ok, data := d.SelectOrderSize()
 	if !ok {
 		return false, utils.EmptyString
@@ -24,7 +24,7 @@ func getDormOrderSize(dormId int64) (bool, string) {
 
 func getDormOrder(dormId int64, limit int64, offset int64) (bool, string) {
 	var d bs.Dorm
-	d.Id = &dormId
+	d.Id = dormId
 	ok, data := d.SelectOrder(limit, offset)
 	if !ok {
 		return false, utils.EmptyString
@@ -50,7 +50,7 @@ func getDormOrder(dormId int64, limit int64, offset int64) (bool, string) {
 		tmp.Order = v
 
 		var u bs.Stu
-		u.StuId = &v.StuId
+		u.StuId = v.StuId
 		u.SelectByStuId()
 		tmp.DormName = u.DormRoom
 		tdata = append(tdata, tmp)

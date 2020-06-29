@@ -21,11 +21,11 @@ type Stu struct {
 
 	Us entity.User
 
-	StuId     *int64 `gorm:"column:id;"`
-	DormId    *int64 `gorm:"column:dorm_id;"`
+	StuId     int64  `gorm:"column:id;"`
+	DormId    int64  `gorm:"column:dorm_id;"`
 	StuNumber string `gorm:"column:stu_number;"`
 	DormRoom  string `gorm:"column:dorm_room;"`
-	UserId    *int64 `gorm:"column:user_id;"`
+	UserId    int64  `gorm:"column:user_id;"`
 
 	Dm Dorm
 }
@@ -74,7 +74,7 @@ where  user.id = ?;
 		return true
 	}
 
-	if u.DormId != nil {
+	if u.DormId != 0 {
 		sql = `SELECT * from dorm where id = ?`
 		err := u.getDb().Raw(sql, u.DormId).Scan(&u.Dm).Error
 		return nil == err
@@ -88,7 +88,7 @@ func (u *Stu) SelectByStuId() bool {
 	if err != nil {
 		return false
 	}
-	u.Us.Id = *u.UserId
+	u.Us.Id = u.UserId
 	ok := u.SelectById()
 	if false == ok {
 		return false
@@ -110,7 +110,7 @@ WHERE
 		return false
 	}
 
-	if u.StuId != nil {
+	if u.StuId != 0 {
 		sql = `UPDATE stu
 SET dorm_id = ?, stu_number = ?,  dorm_room = ?
 WHERE
