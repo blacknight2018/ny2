@@ -27,9 +27,25 @@ func (u *Dorm) setDb(d *gorm.DB) {
 	u.db = d
 }
 
-func (u *Dorm) SelectAllOrder() (bool, []entity.Order) {
+func (u *Dorm) SelectOrder(limit int64, offset int64) (bool, []entity.Order) {
 	var o []entity.Order
-	sql := "select * from `order` where dorm_id = ?"
-	r := u.getDb().Raw(sql, u.Id).Scan(&o).Error
+	sql := "select * from `order` where dorm_id = ? order by id desc limit  ? offset  ?"
+	r := u.getDb().Raw(sql, u.Id, limit, offset).Scan(&o).Error
 	return r == nil, o
+}
+
+func (u *Dorm) SelectOrderSize() (bool, int64) {
+	sql := "select count(*) as size from `order` where dorm_id = ?"
+	type t struct {
+		Size int64 `gorm:"column:size"`
+	}
+	var tmp t
+	u.getDb().Raw(sql, u.Id).Scan(&tmp)
+	return true, tmp.Size
+}
+
+func (u *Dorm) SelectById() bool {
+	sql := `select  * from dorm where id = ?`
+	r := u.getDb().Raw(sql, u.Id).Scan(&u).Error
+	return r == nil
 }

@@ -46,8 +46,47 @@ func Register(engine *gin.Engine) {
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
-		u.GET("order", func(context *gin.Context) {
+		u.GET("order/detail", func(context *gin.Context) {
+			orderId := context.Query("order_id")
+			orderInt, err := strconv.Atoi(orderId)
+			if err == nil {
+				if ok, data := getOrderDetail(int64(orderInt)); ok {
+					gerr.SetResponse(context, gerr.Ok, &data)
+					return
+				}
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
+		u.GET("order/size", func(context *gin.Context) {
+			stuId := context.Query("stu_id")
+			stuIdInt, err := strconv.Atoi(stuId)
+			if err == nil {
+				if ok, data := getStuOrderSize(int64(stuIdInt)); ok {
+					gerr.SetResponse(context, gerr.Ok, &data)
+					return
+				}
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
+		u.GET("order/pre", func(context *gin.Context) {
+			stuId := context.Query("stu_id")
+			limit := context.Query("limit")
+			offset := context.Query("offset")
 
+			stuIdInt, err := strconv.Atoi(stuId)
+			limitInt, err2 := strconv.Atoi(limit)
+			offsetInt, err3 := strconv.Atoi(offset)
+			if err2 != nil || err3 != nil {
+				limitInt = 5
+				offsetInt = 0
+			}
+			if err == nil {
+				if ok, data := getStuPreOrder(int64(stuIdInt), int64(limitInt), int64(offsetInt)); ok {
+					gerr.SetResponse(context, gerr.Ok, &data)
+					return
+				}
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
 		u.POST("code", func(context *gin.Context) {
 			if ok, data := utils.GetRawData(context); ok {
@@ -62,15 +101,15 @@ func Register(engine *gin.Engine) {
 		u.POST("login", func(context *gin.Context) {
 			if ok, data := utils.GetRawData(context); ok {
 				openId := gjson.Get(data, "open_id").String()
-				if isOpenIdExist(openId) {
-					gerr.SetResponse(context, gerr.Ok, nil)
-					return
-				}
+				//if isOpenIdExist(openId) {
+				//	gerr.SetResponse(context, gerr.Ok, nil)
+				//	return
+				//}
 				nickName := gjson.Get(data, "nick_name").String()
 				avatarUrl := gjson.Get(data, "avatar_url").String()
 
-				if login(avatarUrl, nickName, openId) {
-					gerr.SetResponse(context, gerr.Ok, nil)
+				if ok, data := login(avatarUrl, nickName, openId); ok {
+					gerr.SetResponse(context, gerr.Ok, &data)
 					return
 				}
 			}

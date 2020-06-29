@@ -9,12 +9,26 @@ import (
 	"time"
 )
 
-func login(avatarUrl string, nickName string, openId string) bool {
+func login(avatarUrl string, nickName string, openId string) (bool, string) {
 	var s bs.Stu
 	s.Us.OpenId = openId
 	s.Us.AvatarUrl = avatarUrl
 	s.Us.NickName = nickName
-	return s.Insert()
+	r := s.Insert()
+	s.SelectByOpenId()
+
+	type t struct {
+		OpenId string `json:"open_id"`
+		StuId  int64  `json:"stu_id"`
+	}
+	var data t
+	data.OpenId = s.Us.OpenId
+	data.StuId = *s.StuId
+	if bytes, err := json.Marshal(data); err == nil && r {
+		return true, string(bytes)
+	}
+
+	return false, utils.EmptyString
 }
 func getStuMsg(stuIdA int64, stuIdB int64, limit int) (bool, string) {
 	var u bs.Stu
@@ -191,6 +205,20 @@ func getSimpleInfoByOpenId(openId string) (bool, string) {
 	return false, utils.EmptyString
 }
 
+// 获取与stu相关的订单数量
+func getStuOrderSize(stuId int64) (bool, string) {
+	var u bs.Stu
+	u.StuId = &stuId
+	if ok, size := u.SelectOrderLength(); ok {
+		if bytes, err := json.Marshal(size); err == nil {
+			return true, string(bytes)
+		}
+	}
+	return false, utils.EmptyString
+
+}
+
+// 获取与stu相关的订单详细信息
 func getStuOrder(stuId int64, limit int64, offset int64) (bool, string) {
 	var u bs.Stu
 	u.StuId = &stuId
@@ -201,5 +229,76 @@ func getStuOrder(stuId int64, limit int64, offset int64) (bool, string) {
 		}
 	}
 	return false, utils.EmptyString
+}
 
+// 获取与stu相关的订单简略信息
+func getStuPreOrder(stuId int64, limit int64, offset int64) (bool, string) {
+	var u bs.Stu
+	u.StuId = &stuId
+	ok, data := u.SelectOrderByStuId(limit, offset)
+
+	type t struct {
+		OrderId    int64      `json:"order_id"`
+		AvatarUrl  string     `json:"avatar_url"`
+		FinishTime *time.Time `json:"finish_time"`
+		Price      string     `json:"price"`
+		Type       string     `json:"type"`
+		StuId      *int64     `json:"stu_id"`
+		NickName   string     `json:"nick_name"`
+		Dorm       string     `json:"dorm"`
+		Cancel     bool       `json:"cancel"`
+		RecvStu    *int64     `json:"recv_stu"`
+	}
+	var tmp []t
+	for _, v := range data {
+		var k t
+		k.FinishTime = v.FinishTime
+		k.Price = v.Price
+		k.Type = v.Type
+		k.AvatarUrl = v.AvatarUrl
+		k.OrderId = v.Id
+		k.StuId = &v.StuId
+		k.Cancel = v.Cancel
+		k.RecvStu = v.RecvStu
+
+		var u bs.Stu
+		u.StuId = k.StuId
+		u.SelectByStuId()
+		k.NickName = u.Us.NickName
+		k.Dorm = u.Dm.DormName + "-" + u.DormRoom
+
+		tmp = append(tmp, k)
+	}
+	if ok {
+		if bytes, err := json.Marshal(tmp); err == nil {
+			return true, string(bytes)
+		}
+	}
+	return false, utils.EmptyString
+}
+
+// 获取订单的详细情况
+
+func getOrderDetail(orderId int64) (bool, string) {
+	var o entity.Order
+	o.Id = orderId
+	r := o.SelectById()
+
+	type t struct {
+		entity.Order
+		DormName string `json:"dorm_name"`
+	}
+	var tmp t
+	var dm bs.Dorm
+	dm.Id = &o.DormId
+	dm.SelectById()
+	tmp.DormName = dm.DormName
+	tmp.Order = o
+
+	if r {
+		if bytes, err := json.Marshal(tmp); err == nil {
+			return true, string(bytes)
+		}
+	}
+	return false, utils.EmptyString
 }

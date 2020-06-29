@@ -24,7 +24,19 @@ func getSchoolDorm(schoolId int64) (bool, string) {
 	if !ok {
 		return false, utils.EmptyString
 	}
-	if bytes, err := json.Marshal(dorm); err == nil {
+	type t struct {
+		bs.Dorm
+		OrderSize int64 `json:"order_size"`
+	}
+	var tdata []t
+	for _, v := range dorm {
+		var tmp t
+		tmp.Dorm = v
+		_, orderSize := v.SelectOrderSize()
+		tmp.OrderSize = orderSize
+		tdata = append(tdata, tmp)
+	}
+	if bytes, err := json.Marshal(tdata); err == nil {
 		return true, string(bytes)
 	}
 	return false, utils.EmptyString

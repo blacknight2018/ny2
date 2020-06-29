@@ -273,13 +273,18 @@ WHERE
 // 包括我发出的和我接的订单
 func (u *Stu) SelectOrderLength() (bool, int64) {
 	sql := "select count(*) as len from `order` where stu_id = ? || recv_stu = ?"
-	var count int64
-	return nil == u.getDb().Raw(sql, u.StuId, u.StuId).Scan(&count).Error, count
+	type t struct {
+		Len int64
+	}
+	var tmp t
+	r := u.getDb().Raw(sql, u.StuId, u.StuId).Scan(&tmp).Error
+	return nil == r, tmp.Len
 }
 
 // 获取当前学生的订单
 func (u *Stu) SelectOrderByStuId(limit int64, offset int64) (bool, []entity.Order) {
 	var o []entity.Order
-	sql := "select * from `order` where stu_id = ? || recv_stu = ? order by id  desc limit ? offset ?"
-	return nil == u.getDb().Raw(sql).Scan(&o).Error, o
+	sql := "select * from `order` where (stu_id = ?) || (recv_stu = ?) order by id  desc limit ? offset ?"
+	err := u.getDb().Raw(sql, u.StuId, u.StuId, limit, offset).Scan(&o).Error
+	return nil == err, o
 }
