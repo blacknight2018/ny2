@@ -80,6 +80,17 @@ func Register(engine *gin.Engine) {
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
+		u.POST("order/cancel", func(context *gin.Context) {
+			if ok, data := utils.GetRawData(context); ok {
+				orderId := gjson.Get(data, "order_id").Int()
+				stuId := gjson.Get(data, "stu_id").Int()
+				if cancelOrder(orderId, stuId) {
+					gerr.SetResponse(context, gerr.Ok, nil)
+					return
+				}
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
 		u.GET("order/pre", func(context *gin.Context) {
 			stuId := context.Query("stu_id")
 			limit := context.Query("limit")

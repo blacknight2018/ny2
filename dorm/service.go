@@ -22,10 +22,16 @@ func getDormOrderSize(dormId int64) (bool, string) {
 	return false, utils.EmptyString
 }
 
-func getDormOrder(dormId int64, limit int64, offset int64) (bool, string) {
+func getDormOrder(dormId int64, limit int64, offset int64, selectValid bool) (bool, string) {
 	var d bs.Dorm
 	d.Id = dormId
-	ok, data := d.SelectOrder(limit, offset)
+	var ok bool
+	var data []entity.Order
+	if selectValid {
+		ok, data = d.SelectValidOrder(limit, offset)
+	} else {
+		ok, data = d.SelectAllOrder(limit, offset)
+	}
 	if !ok {
 		return false, utils.EmptyString
 	}

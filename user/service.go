@@ -31,6 +31,7 @@ func login(avatarUrl string, nickName string, openId string) (bool, string) {
 
 	return false, utils.EmptyString
 }
+
 func getStuMsg(stuIdA int64, stuIdB int64, limit int) (bool, string) {
 	var u bs.Stu
 	u.StuId = stuIdA
@@ -51,6 +52,7 @@ func getStuMsg(stuIdA int64, stuIdB int64, limit int) (bool, string) {
 	}
 	return false, utils.EmptyString
 }
+
 func sendTxtMessage(senderStuId int64, recipientStuId int64, content string) bool {
 	var s bs.Stu
 	m := entity.Msg{
@@ -90,6 +92,7 @@ func putInfoByOpenId(openId string, dormId int64, stuNumber string, stuMobile st
 	u.DormRoom = room
 	return u.UpdateById()
 }
+
 func getSimpleInfoByStuId(stuId int64) (bool, string) {
 	var u bs.Stu
 	u.StuId = stuId
@@ -268,7 +271,12 @@ func getStuPreOrder(stuId int64, limit int64, offset int64) (bool, string) {
 		u.StuId = k.StuId
 		u.SelectByStuId()
 		k.NickName = u.Us.NickName
-		k.Dorm = u.Dm.DormName + "-" + u.DormRoom
+
+		var d bs.Dorm
+		d.Id = v.DormId
+		d.SelectById()
+
+		k.Dorm = d.DormName
 
 		tmp = append(tmp, k)
 	}
@@ -323,4 +331,16 @@ func setOrderRecv(orderId int64, stuId int64) bool {
 		return r
 	}
 	return false
+}
+
+// 取消订单
+func cancelOrder(orderId int64, stuId int64) bool {
+	var o entity.Order
+	o.Id = orderId
+	r := o.SelectById()
+	if !r {
+		return false
+	}
+	o.Cancel = true
+	return o.Update()
 }

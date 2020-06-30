@@ -32,7 +32,7 @@ func getSchoolDorm(schoolId int64) (bool, string) {
 	for _, v := range dorm {
 		var tmp t
 		tmp.Dorm = v
-		_, orderSize := v.SelectOrderSize()
+		_, orderSize := v.SelectValidOrderSize()
 		tmp.OrderSize = orderSize
 		tdata = append(tdata, tmp)
 	}

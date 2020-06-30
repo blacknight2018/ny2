@@ -14,6 +14,13 @@ func Register(engine *gin.Engine) {
 		limit := context.Query("limit")
 		offset := context.Query("offset")
 
+		//显示未过期的 未取消的 未接送的
+		flag := context.Query("flag")
+		var valid bool
+		if flag == "valid" {
+			valid = true
+		}
+
 		limitInt, err2 := strconv.Atoi(limit)
 		offsetInt, err3 := strconv.Atoi(offset)
 		if err2 != nil || err3 != nil {
@@ -22,7 +29,7 @@ func Register(engine *gin.Engine) {
 		}
 
 		if err == nil {
-			if ok, data := getDormOrder(int64(dormIdInt), int64(limitInt), int64(offsetInt)); ok {
+			if ok, data := getDormOrder(int64(dormIdInt), int64(limitInt), int64(offsetInt), valid); ok {
 				gerr.SetResponse(context, gerr.Ok, &data)
 				return
 			}
