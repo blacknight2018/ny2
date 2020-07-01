@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
-	"ny/stu"
 	"ny2/bs/entity"
 	"ny2/gerr"
 	"ny2/utils"
@@ -38,11 +37,6 @@ func Register(engine *gin.Engine) {
 				}
 
 				stuId := gjson.Get(data, "stu_id").Int()
-
-				if stu.GetStuExitsById(stuId) == false {
-					gerr.SetResponse(context, gerr.UnKnowUser, nil)
-					return
-				}
 
 				orderPrice := gjson.Get(data, "price").String()
 				orderEndTime := gjson.Get(data, "end_time").Int()

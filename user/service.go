@@ -98,7 +98,7 @@ func getSimpleInfoByStuId(stuId int64) (int, string) {
 	var u bs.Stu
 	u.StuId = stuId
 	r := u.SelectByStuId()
-	if r {
+	if !r {
 		return gerr.UnKnow, utils.EmptyString
 	}
 	return getSimpleInfoByOpenId(u.Us.OpenId)
