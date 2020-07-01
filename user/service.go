@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"ny2/bs"
 	"ny2/bs/entity"
+	"ny2/gerr"
 	"ny2/utils"
 	"ny2/wxapi"
 	"strconv"
 	"time"
 )
 
-func login(avatarUrl string, nickName string, openId string) (bool, string) {
+func login(avatarUrl string, nickName string, openId string) (int, string) {
 	var s bs.Stu
 	s.Us.OpenId = openId
 	s.Us.AvatarUrl = avatarUrl
@@ -26,13 +27,13 @@ func login(avatarUrl string, nickName string, openId string) (bool, string) {
 	data.OpenId = s.Us.OpenId
 	data.StuId = s.StuId
 	if bytes, err := json.Marshal(data); err == nil && r {
-		return true, string(bytes)
+		return gerr.Ok, string(bytes)
 	}
 
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
-func getStuMsg(stuIdA int64, stuIdB int64, limit int) (bool, string) {
+func getStuMsg(stuIdA int64, stuIdB int64, limit int) (int, string) {
 	var u bs.Stu
 	u.StuId = stuIdA
 	if ok, data := u.SelectStuMsg(stuIdB, limit); ok {
@@ -47,13 +48,13 @@ func getStuMsg(stuIdA int64, stuIdB int64, limit int) (bool, string) {
 		}()
 
 		if bytes, err := json.Marshal(data); err == nil {
-			return true, string(bytes)
+			return gerr.Ok, string(bytes)
 		}
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
-func sendTxtMessage(senderStuId int64, recipientStuId int64, content string) bool {
+func sendTxtMessage(senderStuId int64, recipientStuId int64, content string) int {
 	var s bs.Stu
 	m := entity.Msg{
 		SenderStu:    senderStuId,
@@ -68,48 +69,48 @@ func sendTxtMessage(senderStuId int64, recipientStuId int64, content string) boo
 		StuId:  senderStuId,
 		IsRead: true,
 	})
+	if r {
+		return gerr.Ok
 
-	return r
+	}
+	return gerr.UnKnow
 
 }
 
-func isOpenIdExist(openId string) bool {
-	var s bs.Stu
-	s.Us.OpenId = openId
-	return s.IsOpenIdExist()
-}
-
-func putInfoByOpenId(openId string, dormId int64, stuNumber string, stuMobile string, room string) bool {
+func putInfoByOpenId(openId string, dormId int64, stuNumber string, stuMobile string, room string) int {
 	var u bs.Stu
 	u.Us.OpenId = openId
 	r := u.SelectByOpenId()
 	if !r {
-		return false
+		return gerr.UnKnow
 	}
 	u.DormId = dormId
 	u.StuNumber = stuNumber
 	u.Us.Mobile = stuMobile
 	u.DormRoom = room
-	return u.UpdateById()
+	if u.UpdateById() {
+		return gerr.Ok
+	}
+	return gerr.UnKnow
 }
 
-func getSimpleInfoByStuId(stuId int64) (bool, string) {
+func getSimpleInfoByStuId(stuId int64) (int, string) {
 	var u bs.Stu
 	u.StuId = stuId
 	r := u.SelectByStuId()
-	if r == false {
-		return false, utils.EmptyString
+	if r {
+		return gerr.UnKnow, utils.EmptyString
 	}
 	return getSimpleInfoByOpenId(u.Us.OpenId)
 }
 
-func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comment string, templateId string) bool {
+func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comment string, templateId string) int {
 	var o entity.Order
 	var s bs.Stu
 	s.StuId = stuId
 	r := s.SelectByStuId()
-	if r == false {
-		return false
+	if !r {
+		return gerr.UnKnow
 	}
 
 	o.Price = price
@@ -121,26 +122,19 @@ func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comm
 	o.Type = typeStr
 
 	r = s.InsertOrder(&o)
-	return r
-
-}
-
-func hasNewUnreadMsg(openId string) bool {
-	var u bs.Stu
-	u.Us.OpenId = openId
-	r := u.SelectByOpenId()
-	if !r {
-		return false
+	if r {
+		return gerr.Ok
 	}
-	return u.HasUnReadMsg()
+	return gerr.UnKnow
+
 }
 
-func getUnreadNewestMsg(openId string) (bool, string) {
+func getUnreadNewestMsg(stuId int64) (int, string) {
 	var u bs.Stu
-	u.Us.OpenId = openId
-	r := u.SelectByOpenId()
+	u.StuId = stuId
+	r := u.SelectByStuId()
 	if !r {
-		return false, utils.EmptyString
+		return gerr.UnKnow, utils.EmptyString
 	}
 	if ok, data := u.SelectNewestUnreadMsg(); ok {
 
@@ -170,18 +164,18 @@ func getUnreadNewestMsg(openId string) (bool, string) {
 		}
 
 		if bytes, err := json.Marshal(tmp); err == nil {
-			return true, string(bytes)
+			return gerr.Ok, string(bytes)
 		}
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
-func getSimpleInfoByOpenId(openId string) (bool, string) {
+func getSimpleInfoByOpenId(openId string) (int, string) {
 	var u bs.Stu
 	u.Us.OpenId = openId
 	r := u.SelectByOpenId()
 	if !r {
-		return false, utils.EmptyString
+		return gerr.UnKnow, utils.EmptyString
 	}
 	type t struct {
 		DormId    int64  `json:"dorm_id"`
@@ -204,39 +198,39 @@ func getSimpleInfoByOpenId(openId string) (bool, string) {
 	tmp.AvatarUrl = u.Us.AvatarUrl
 
 	if bytes, err := json.Marshal(tmp); err == nil {
-		return true, string(bytes)
+		return gerr.Ok, string(bytes)
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
 // 获取与stu相关的订单数量
-func getStuOrderSize(stuId int64) (bool, string) {
+func getStuOrderSize(stuId int64) (int, string) {
 	var u bs.Stu
 	u.StuId = stuId
 	if ok, size := u.SelectOrderLength(); ok {
 		if bytes, err := json.Marshal(size); err == nil {
-			return true, string(bytes)
+			return gerr.Ok, string(bytes)
 		}
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 
 }
 
 // 获取与stu相关的订单详细信息
-func getStuOrder(stuId int64, limit int64, offset int64) (bool, string) {
+func getStuOrder(stuId int64, limit int64, offset int64) (int, string) {
 	var u bs.Stu
 	u.StuId = stuId
 	ok, data := u.SelectOrderByStuId(limit, offset)
 	if ok {
 		if bytes, err := json.Marshal(data); err == nil {
-			return true, string(bytes)
+			return gerr.Ok, string(bytes)
 		}
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
 // 获取与stu相关的订单简略信息
-func getStuPreOrder(stuId int64, limit int64, offset int64) (bool, string) {
+func getStuPreOrder(stuId int64, limit int64, offset int64) (int, string) {
 	var u bs.Stu
 	u.StuId = stuId
 	ok, data := u.SelectOrderByStuId(limit, offset)
@@ -282,15 +276,15 @@ func getStuPreOrder(stuId int64, limit int64, offset int64) (bool, string) {
 	}
 	if ok {
 		if bytes, err := json.Marshal(tmp); err == nil {
-			return true, string(bytes)
+			return gerr.Ok, string(bytes)
 		}
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
 // 获取订单的详细情况
 
-func getOrderDetail(orderId int64) (bool, string) {
+func getOrderDetail(orderId int64) (int, string) {
 	var o entity.Order
 	o.Id = orderId
 	r := o.SelectById()
@@ -308,14 +302,14 @@ func getOrderDetail(orderId int64) (bool, string) {
 
 	if r {
 		if bytes, err := json.Marshal(tmp); err == nil {
-			return true, string(bytes)
+			return gerr.Ok, string(bytes)
 		}
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
 // 修改订单的接收者
-func setOrderRecv(orderId int64, stuId int64) bool {
+func setOrderRecv(orderId int64, stuId int64) int {
 	var o entity.Order
 	o.Id = orderId
 	r := o.SelectById()
@@ -328,19 +322,26 @@ func setOrderRecv(orderId int64, stuId int64) bool {
 		u.StuId = o.StuId
 		u.SelectByStuId()
 		wxapi.SendOrderNotify(u.Us.OpenId, o.TemplateId, u.Dm.DormName, orderId, o.Comment)
-		return r
+		if r {
+			return gerr.Ok
+		}
+		return gerr.UnKnow
 	}
-	return false
+	return gerr.UnKnow
 }
 
 // 取消订单
-func cancelOrder(orderId int64, stuId int64) bool {
+func cancelOrder(orderId int64, stuId int64) int {
 	var o entity.Order
 	o.Id = orderId
 	r := o.SelectById()
 	if !r {
-		return false
+		return gerr.UnKnow
 	}
 	o.Cancel = true
-	return o.Update()
+	r = o.Update()
+	if r {
+		return gerr.Ok
+	}
+	return gerr.UnKnow
 }

@@ -22,10 +22,9 @@ func Register(engine *gin.Engine) {
 			if ok, data := utils.GetRawData(context); ok {
 				orderId := gjson.Get(data, "order_id").Int()
 				stuId := gjson.Get(data, "stu_id").Int()
-				if setOrderRecv(orderId, stuId) {
-					gerr.SetResponse(context, gerr.Ok, nil)
-					return
-				}
+				errCode := setOrderRecv(orderId, stuId)
+				gerr.SetResponse(context, errCode, nil)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -51,10 +50,9 @@ func Register(engine *gin.Engine) {
 				orderTemplateId := gjson.Get(data, "template_id").String()
 				fmt.Println(orderType, orderPrice, orderEndTime, orderComment)
 
-				if sendOrder(int(orderType), stuId, orderPrice, time.Unix(orderEndTime/1000, 0), orderComment, orderTemplateId) {
-					gerr.SetResponse(context, gerr.Ok, nil)
-					return
-				}
+				errCode := sendOrder(int(orderType), stuId, orderPrice, time.Unix(orderEndTime/1000, 0), orderComment, orderTemplateId)
+				gerr.SetResponse(context, errCode, nil)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -62,10 +60,9 @@ func Register(engine *gin.Engine) {
 			orderId := context.Query("order_id")
 			orderInt, err := strconv.Atoi(orderId)
 			if err == nil {
-				if ok, data := getOrderDetail(int64(orderInt)); ok {
-					gerr.SetResponse(context, gerr.Ok, &data)
-					return
-				}
+				errCode, data := getOrderDetail(int64(orderInt))
+				gerr.SetResponse(context, errCode, &data)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -73,10 +70,9 @@ func Register(engine *gin.Engine) {
 			stuId := context.Query("stu_id")
 			stuIdInt, err := strconv.Atoi(stuId)
 			if err == nil {
-				if ok, data := getStuOrderSize(int64(stuIdInt)); ok {
-					gerr.SetResponse(context, gerr.Ok, &data)
-					return
-				}
+				errCode, data := getStuOrderSize(int64(stuIdInt))
+				gerr.SetResponse(context, errCode, &data)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -84,10 +80,9 @@ func Register(engine *gin.Engine) {
 			if ok, data := utils.GetRawData(context); ok {
 				orderId := gjson.Get(data, "order_id").Int()
 				stuId := gjson.Get(data, "stu_id").Int()
-				if cancelOrder(orderId, stuId) {
-					gerr.SetResponse(context, gerr.Ok, nil)
-					return
-				}
+				errCode := cancelOrder(orderId, stuId)
+				gerr.SetResponse(context, errCode, nil)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -104,10 +99,9 @@ func Register(engine *gin.Engine) {
 				offsetInt = 0
 			}
 			if err == nil {
-				if ok, data := getStuPreOrder(int64(stuIdInt), int64(limitInt), int64(offsetInt)); ok {
-					gerr.SetResponse(context, gerr.Ok, &data)
-					return
-				}
+				errCode, data := getStuPreOrder(int64(stuIdInt), int64(limitInt), int64(offsetInt))
+				gerr.SetResponse(context, errCode, &data)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -131,10 +125,9 @@ func Register(engine *gin.Engine) {
 				nickName := gjson.Get(data, "nick_name").String()
 				avatarUrl := gjson.Get(data, "avatar_url").String()
 
-				if ok, data := login(avatarUrl, nickName, openId); ok {
-					gerr.SetResponse(context, gerr.Ok, &data)
-					return
-				}
+				errCode, data := login(avatarUrl, nickName, openId)
+				gerr.SetResponse(context, errCode, &data)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -143,17 +136,14 @@ func Register(engine *gin.Engine) {
 			stuId := context.Query("stu_id")
 			stuIdInt, err := strconv.Atoi(stuId)
 			if err == nil {
-				if ok, data := getSimpleInfoByStuId(int64(stuIdInt)); ok {
-					gerr.SetResponse(context, gerr.Ok, &data)
-					return
-				}
+				errCode, data := getSimpleInfoByStuId(int64(stuIdInt))
+				gerr.SetResponse(context, errCode, &data)
+				return
 
 			}
-			if ok, data := getSimpleInfoByOpenId(openId); ok {
-				gerr.SetResponse(context, gerr.Ok, &data)
-				return
-			}
-			gerr.SetResponse(context, gerr.UnKnow, nil)
+			errCode, data := getSimpleInfoByOpenId(openId)
+			gerr.SetResponse(context, errCode, &data)
+			return
 		})
 		u.PUT("", func(context *gin.Context) {
 			if ok, data := utils.GetRawData(context); ok {
@@ -162,10 +152,9 @@ func Register(engine *gin.Engine) {
 				stuNumber := gjson.Get(data, "stu_number").String()
 				stuMobile := gjson.Get(data, "mobile").String()
 				room := gjson.Get(data, "room").String()
-				if putInfoByOpenId(openId, dormId, stuNumber, stuMobile, room) {
-					gerr.SetResponse(context, gerr.Ok, &data)
-					return
-				}
+				errCode := putInfoByOpenId(openId, dormId, stuNumber, stuMobile, room)
+				gerr.SetResponse(context, errCode, &data)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -178,10 +167,9 @@ func Register(engine *gin.Engine) {
 					gerr.SetResponse(context, gerr.SendNotEmpty, nil)
 					return
 				}
-				if ok := sendTxtMessage(senderStuId, recipientStuId, content); ok {
-					gerr.SetResponse(context, gerr.Ok, nil)
-					return
-				}
+				errCode := sendTxtMessage(senderStuId, recipientStuId, content)
+				gerr.SetResponse(context, errCode, nil)
+				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
@@ -191,20 +179,21 @@ func Register(engine *gin.Engine) {
 			stuIdAInt, err := strconv.Atoi(stuIdA)
 			stuIdBInt, err2 := strconv.Atoi(stuIdB)
 			if err == nil && err2 == nil {
-				if ok, data := getStuMsg(int64(stuIdAInt), int64(stuIdBInt), 10); ok {
-					gerr.SetResponse(context, gerr.Ok, &data)
-				}
+				errCode, data := getStuMsg(int64(stuIdAInt), int64(stuIdBInt), 10)
+				gerr.SetResponse(context, errCode, &data)
 				return
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})
 		u.GET("msg/top", func(context *gin.Context) {
-			openId := context.Query("open_id")
-			if ok, data := getUnreadNewestMsg(openId); ok {
-				gerr.SetResponse(context, gerr.Ok, &data)
-				return
+			stuId := context.Query("stu_id")
+			stuIdInt, err := strconv.Atoi(stuId)
+			if err != nil {
+				gerr.SetResponse(context, gerr.UnKnow, nil)
 			}
-			gerr.SetResponse(context, gerr.UnKnow, nil)
+			errCode, data := getUnreadNewestMsg(int64(stuIdInt))
+			gerr.SetResponse(context, errCode, &data)
+			return
 		})
 	}
 }

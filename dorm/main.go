@@ -29,10 +29,9 @@ func Register(engine *gin.Engine) {
 		}
 
 		if err == nil {
-			if ok, data := getDormOrder(int64(dormIdInt), int64(limitInt), int64(offsetInt), valid); ok {
-				gerr.SetResponse(context, gerr.Ok, &data)
-				return
-			}
+			errCode, data := getDormOrder(int64(dormIdInt), int64(limitInt), int64(offsetInt), valid)
+			gerr.SetResponse(context, errCode, &data)
+			return
 		}
 		gerr.SetResponse(context, gerr.UnKnow, nil)
 	})
@@ -40,10 +39,9 @@ func Register(engine *gin.Engine) {
 		dormId := context.Query("dorm_id")
 		dormIdInt, err := strconv.Atoi(dormId)
 		if err == nil {
-			if ok, data := getDormOrderSize(int64(dormIdInt)); ok {
-				gerr.SetResponse(context, gerr.Ok, &data)
-				return
-			}
+			errCode, data := getDormOrderSize(int64(dormIdInt))
+			gerr.SetResponse(context, errCode, &data)
+			return
 		}
 		gerr.SetResponse(context, gerr.UnKnow, nil)
 	})

@@ -10,11 +10,8 @@ func Register(engine *gin.Engine) {
 	s := engine.Group("school")
 	{
 		s.GET("list", func(context *gin.Context) {
-			if ok, data := getAllSchool(); ok {
-				gerr.SetResponse(context, gerr.Ok, &data)
-				return
-			}
-			gerr.SetResponse(context, gerr.UnKnow, nil)
+			errCode, data := getAllSchool()
+			gerr.SetResponse(context, errCode, &data)
 		})
 		s.GET("dorm", func(context *gin.Context) {
 			schoolId := context.Query("school_id")
@@ -23,11 +20,8 @@ func Register(engine *gin.Engine) {
 				gerr.SetResponse(context, gerr.UnKnow, nil)
 				return
 			}
-			if ok, data := getSchoolDorm(int64(schoolIdInt)); ok {
-				gerr.SetResponse(context, gerr.Ok, &data)
-				return
-			}
-			gerr.SetResponse(context, gerr.UnKnow, nil)
+			errCode, data := getSchoolDorm(int64(schoolIdInt))
+			gerr.SetResponse(context, errCode, &data)
 
 		})
 	}

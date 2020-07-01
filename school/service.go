@@ -3,26 +3,27 @@ package school
 import (
 	"encoding/json"
 	"ny2/bs"
+	"ny2/gerr"
 	"ny2/utils"
 )
 
-func getAllSchool() (bool, string) {
+func getAllSchool() (int, string) {
 	r, data := bs.SelectAllSchool()
 	if !r {
-		return false, utils.EmptyString
+		return gerr.UnKnow, utils.EmptyString
 	}
 	if bytes, err := json.Marshal(data); err == nil {
-		return true, string(bytes)
+		return gerr.Ok, string(bytes)
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
-func getSchoolDorm(schoolId int64) (bool, string) {
+func getSchoolDorm(schoolId int64) (int, string) {
 	var s bs.School
 	s.Id = schoolId
 	ok, dorm := s.SelectSchoolAllDorm()
 	if !ok {
-		return false, utils.EmptyString
+		return gerr.UnKnow, utils.EmptyString
 	}
 	type t struct {
 		bs.Dorm
@@ -37,7 +38,7 @@ func getSchoolDorm(schoolId int64) (bool, string) {
 		tdata = append(tdata, tmp)
 	}
 	if bytes, err := json.Marshal(tdata); err == nil {
-		return true, string(bytes)
+		return gerr.Ok, string(bytes)
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }

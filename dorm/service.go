@@ -4,25 +4,26 @@ import (
 	"encoding/json"
 	"ny2/bs"
 	"ny2/bs/entity"
+	"ny2/gerr"
 	"ny2/utils"
 )
 
 // 获取宿舍楼里的订单总数量
-func getDormOrderSize(dormId int64) (bool, string) {
+func getDormOrderSize(dormId int64) (int, string) {
 
 	var d bs.Dorm
 	d.Id = dormId
 	ok, data := d.SelectOrderSize()
 	if !ok {
-		return false, utils.EmptyString
+		return gerr.UnKnow, utils.EmptyString
 	}
 	if bytes, err := json.Marshal(data); err == nil {
-		return true, string(bytes)
+		return gerr.Ok, string(bytes)
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 }
 
-func getDormOrder(dormId int64, limit int64, offset int64, selectValid bool) (bool, string) {
+func getDormOrder(dormId int64, limit int64, offset int64, selectValid bool) (int, string) {
 	var d bs.Dorm
 	d.Id = dormId
 	var ok bool
@@ -33,7 +34,7 @@ func getDormOrder(dormId int64, limit int64, offset int64, selectValid bool) (bo
 		ok, data = d.SelectAllOrder(limit, offset)
 	}
 	if !ok {
-		return false, utils.EmptyString
+		return gerr.UnKnow, utils.EmptyString
 	}
 
 	type t struct {
@@ -62,8 +63,8 @@ func getDormOrder(dormId int64, limit int64, offset int64, selectValid bool) (bo
 		tdata = append(tdata, tmp)
 	}
 	if bytes, err := json.Marshal(tdata); err == nil {
-		return true, string(bytes)
+		return gerr.Ok, string(bytes)
 	}
-	return false, utils.EmptyString
+	return gerr.UnKnow, utils.EmptyString
 
 }
