@@ -21,7 +21,7 @@ func GetDB() *gorm.DB {
 		return gdb
 	}
 	db, err := gorm.Open("mysql", `root:WOaini1314@tcp(test.bybyte.cn:3306)/ny?charset=utf8&parseTime=True&loc=Local&timeout=10s&readTimeout=30s&writeTimeout=60s`)
-	db.LogMode(true)
+	db.LogMode(false)
 	gdb = db
 	fmt.Println(err)
 	return db

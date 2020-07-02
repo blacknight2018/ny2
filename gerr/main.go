@@ -7,19 +7,21 @@ import (
 )
 
 const (
-	Ok           = iota
-	UnKnow       = iota
-	ParamError   = iota
-	UnKnowUser   = iota
-	SendNotEmpty = iota
+	Ok             = iota
+	UnKnow         = iota
+	ParamError     = iota
+	UnKnowUser     = iota
+	SendNotEmpty   = iota
+	UnCompleteInfo = iota
 )
 
 var Msg = map[int]string{
-	Ok:           "成功",
-	UnKnow:       "未知错误",
-	ParamError:   "参数错误",
-	UnKnowUser:   "未知用户",
-	SendNotEmpty: "发送内容不能为空",
+	Ok:             "成功",
+	UnKnow:         "未知错误",
+	ParamError:     "参数错误",
+	UnKnowUser:     "未知用户",
+	SendNotEmpty:   "发送内容不能为空",
+	UnCompleteInfo: "未填写学校宿舍信息",
 }
 
 func SetResponse(ctx *gin.Context, ErrCode int, RespJson *string) {

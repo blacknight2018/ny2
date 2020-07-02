@@ -110,7 +110,10 @@ func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comm
 	s.StuId = stuId
 	r := s.SelectByStuId()
 	if !r {
-		return gerr.UnKnow
+		return gerr.UnKnowUser
+	}
+	if s.DormId == 0 {
+		return gerr.UnCompleteInfo
 	}
 
 	o.Price = price

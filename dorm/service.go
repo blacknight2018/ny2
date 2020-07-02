@@ -13,7 +13,7 @@ func getDormOrderSize(dormId int64) (int, string) {
 
 	var d bs.Dorm
 	d.Id = dormId
-	ok, data := d.SelectOrderSize()
+	ok, data := d.SelectValidOrderSize()
 	if !ok {
 		return gerr.UnKnow, utils.EmptyString
 	}
