@@ -17,7 +17,30 @@ func getAllSchool() (int, string) {
 	}
 	return gerr.UnKnow, utils.EmptyString
 }
-
+func getSchoolCanteen(schoolId int64) (int, string) {
+	var s bs.School
+	s.Id = schoolId
+	ok, canteen := s.SelectSchoolAllCanteen()
+	if !ok {
+		return gerr.UnKnow, utils.EmptyString
+	}
+	if bytes, err := json.Marshal(canteen); err == nil {
+		return gerr.Ok, string(bytes)
+	}
+	return gerr.UnKnow, utils.EmptyString
+}
+func getSchoolShop(schoolId int64) (int, string) {
+	var s bs.School
+	s.Id = schoolId
+	ok, canteen := s.SelectSchoolAllShop()
+	if !ok {
+		return gerr.UnKnow, utils.EmptyString
+	}
+	if bytes, err := json.Marshal(canteen); err == nil {
+		return gerr.Ok, string(bytes)
+	}
+	return gerr.UnKnow, utils.EmptyString
+}
 func getSchoolDorm(schoolId int64) (int, string) {
 	var s bs.School
 	s.Id = schoolId

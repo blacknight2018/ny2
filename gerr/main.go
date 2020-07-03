@@ -11,8 +11,10 @@ const (
 	UnKnow         = iota
 	ParamError     = iota
 	UnKnowUser     = iota
+	UNKnowOrder    = iota
 	SendNotEmpty   = iota
 	UnCompleteInfo = iota
+	InBlock        = iota
 )
 
 var Msg = map[int]string{
@@ -20,8 +22,10 @@ var Msg = map[int]string{
 	UnKnow:         "未知错误",
 	ParamError:     "参数错误",
 	UnKnowUser:     "未知用户",
+	UNKnowOrder:    "找不到的订单",
 	SendNotEmpty:   "发送内容不能为空",
 	UnCompleteInfo: "未填写学校宿舍信息",
+	InBlock:        "由于黑名单关系，操作拒绝",
 }
 
 func SetResponse(ctx *gin.Context, ErrCode int, RespJson *string) {

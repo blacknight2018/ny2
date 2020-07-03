@@ -130,6 +130,7 @@ func (u *Stu) Insert() bool {
 	u.setDb(tx)
 	defer func() {
 		newCon.Close()
+		tx.Close()
 		u.setDb(nil)
 	}()
 	sql := `insert into user(open_id,nick_name,mobile,avatar_url) values(?,?,?,?);`
@@ -164,6 +165,7 @@ func (u *Stu) IsOpenIdExist() bool {
 
 func (u *Stu) InsertMsg(m *entity.Msg) bool {
 	newCon := db.NewDbCon()
+	u.setDb(newCon)
 	defer func() {
 		newCon.Close()
 		u.setDb(nil)
@@ -180,21 +182,22 @@ func (u *Stu) InsertMsg(m *entity.Msg) bool {
 }
 
 func (u *Stu) InsertOrder(or *entity.Order) bool {
-	sql := "insert into `order`(stu_id,price,finish_time,type,comment,recv_stu,school_id,dorm_id,avatar_url,template_id) values(?,?,?,?,?,?,?,?,?,?)"
-	err := u.getDb().Exec(sql, u.StuId, or.Price, or.FinishTime, or.Type, or.Comment, or.RecvStu, or.SchoolId, u.DormId, or.AvatarUrl, or.TemplateId).Error
+	sql := "insert into `order`(stu_id,price,finish_time,type,comment,recv_stu,school_id,dorm_id,avatar_url,template_id,place_id) values(?,?,?,?,?,?,?,?,?,?,?)"
+	err := u.getDb().Exec(sql, u.StuId, or.Price, or.FinishTime, or.Type, or.Comment, or.RecvStu, or.SchoolId, u.DormId, or.AvatarUrl, or.TemplateId, or.PlaceId).Error
 	return err == nil
 }
 
 func (u *Stu) InsertMsgDetail(md *entity.Detail) bool {
 	newCon := db.NewDbCon()
+	u.setDb(newCon)
 	defer func() {
 		newCon.Close()
 		u.setDb(nil)
 	}()
-	u.setDb(newCon)
 	sql := `insert into msgdetail(msg_id,stu_id,is_read) values(?,?,?)`
 	err := u.getDb().Exec(sql, md.MsgId, md.StuId, md.IsRead).Error
-
+	sql = `select * from msgdetail where msg_id = ? && stu_id = ?`
+	u.getDb().Raw(sql, md.MsgId, md.StuId).Scan(&md)
 	return err == nil
 }
 
@@ -287,4 +290,42 @@ func (u *Stu) SelectOrderByStuId(limit int64, offset int64) (bool, []entity.Orde
 	sql := "select * from `order` where (stu_id = ?) || (recv_stu = ?) order by id  desc limit ? offset ?"
 	err := u.getDb().Raw(sql, u.StuId, u.StuId, limit, offset).Scan(&o).Error
 	return nil == err, o
+}
+
+// 是否是拉黑关系
+
+func (u *Stu) IsBeDstBlock(dstStu int64) bool {
+	sql := `select * from block where (stu_id = ? && dst_stu = ?)||(stu_id = ? && dst_stu = ?)`
+	return nil == u.getDb().Raw(sql, u.StuId, dstStu, dstStu, u.StuId).Error
+}
+
+// 获取我拉黑的列表
+
+func (u *Stu) SelectBlockList() (bool, []Stu) {
+	var s []Stu
+	sql := `SELECT
+	*
+FROM
+	stu
+WHERE
+	id IN (
+		SELECT
+			dst_stu
+		FROM
+			block
+		WHERE
+			stu_id = ?
+	)`
+	return nil == u.getDb().Raw(sql, u.StuId).Scan(&s).Error, s
+}
+
+// 移除黑名单列表
+
+func (u *Stu) DeleteOutBlockList(dstStu int64) bool {
+	sql := `delete from block where stu_id = ? && dst_stu = ?;`
+	err := u.getDb().Exec(sql, u.StuId, dstStu)
+	if err.RecordNotFound() {
+		return true
+	}
+	return nil == err.Error
 }

@@ -8,12 +8,20 @@ import (
 	"ny2/utils"
 )
 
-// 获取宿舍楼里的订单总数量
-func getDormOrderSize(dormId int64) (int, string) {
+// 获取宿舍楼里的有效的订单总数量
+func getDormValidOrderSize(stuId int64, dormId int64) (int, string) {
 
 	var d bs.Dorm
 	d.Id = dormId
-	ok, data := d.SelectValidOrderSize()
+	var ok bool
+	var data int64
+
+	if stuId != 0 {
+		//排除掉被拉黑的订单
+		ok, data = d.SelectValidOrderWithBlockSize(stuId)
+	} else {
+		ok, data = d.SelectValidOrderSize()
+	}
 	if !ok {
 		return gerr.UnKnow, utils.EmptyString
 	}
@@ -23,14 +31,22 @@ func getDormOrderSize(dormId int64) (int, string) {
 	return gerr.UnKnow, utils.EmptyString
 }
 
-func getDormOrder(dormId int64, limit int64, offset int64, selectValid bool) (int, string) {
+func getDormOrder(stuId int64, dormId int64, limit int64, offset int64, selectValid bool) (int, string) {
 	var d bs.Dorm
 	d.Id = dormId
 	var ok bool
 	var data []entity.Order
+
+	//是否返回未被接送的、未过期的有效的订单
 	if selectValid {
-		ok, data = d.SelectValidOrder(limit, offset)
+
+		if stuId != 0 {
+			ok, data = d.SelectValidOrderWithBlock(stuId, limit, offset)
+		} else {
+			ok, data = d.SelectValidOrder(limit, offset)
+		}
 	} else {
+
 		ok, data = d.SelectAllOrder(limit, offset)
 	}
 	if !ok {
@@ -40,26 +56,25 @@ func getDormOrder(dormId int64, limit int64, offset int64, selectValid bool) (in
 	type t struct {
 		entity.Order
 		DormName string `json:"dorm_name"`
+		Place    string `json:"place"`
 	}
 	var tdata []t
 	for _, v := range data {
 		var tmp t
-		//tmp.AvatarUrl = v.AvatarUrl
-		//tmp.Type = v.Type
-		//tmp.TemplateId = v.TemplateId
-		//tmp.Comment = v.Comment
-		//tmp.Price = v.Price
-		//tmp.FinishTime = v.FinishTime
-		//tmp.SchoolId = v.SchoolId
-		//tmp.StuId = v.StuId
-		//tmp.RecvStu = v.RecvStu
-		//tmp.DormId = v.DormId
 		tmp.Order = v
 
 		var u bs.Stu
 		u.StuId = v.StuId
 		u.SelectByStuId()
 		tmp.DormName = u.DormRoom
+
+		tmp.Place = v.SelectPlaceName()
+
+		////去除黑名单里的订单
+		//if u.IsBeDstBlock(stuId){
+		//	continue
+		//}
+
 		tdata = append(tdata, tmp)
 	}
 	if bytes, err := json.Marshal(tdata); err == nil {

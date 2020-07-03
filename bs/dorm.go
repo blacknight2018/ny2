@@ -48,6 +48,25 @@ func (u *Dorm) SelectValidOrderSize() (bool, int64) {
 	u.getDb().Raw(sql, u.Id).Scan(&tmp)
 	return true, tmp.Size
 }
+
+func (u *Dorm) SelectValidOrderWithBlock(stuId int64, limit int64, offset int64) (bool, []entity.Order) {
+	var o []entity.Order
+	sql := "select * from `order` where dorm_id = ? && cancel = 0 && recv_stu = 0  " + " && ( ((stu_id = ?) || (stu_id NOT IN ((SELECT IF (stu_id = ?, dst_stu, stu_id) AS a FROM block WHERE stu_id = ? || dst_stu = ? ) ) ) ))" + "order by id desc limit  ? offset  ?"
+
+	r := u.getDb().Raw(sql, u.Id, stuId, stuId, stuId, stuId, limit, offset).Scan(&o).Error
+	return r == nil, o
+}
+func (u *Dorm) SelectValidOrderWithBlockSize(stuId int64) (bool, int64) {
+	sql := "select count(*) as size from `order` where dorm_id = ? && cancel = 0 && recv_stu = 0 " +
+		" && ( ((stu_id = ?) || (stu_id NOT IN ((SELECT IF (stu_id = ?, dst_stu, stu_id) AS a FROM block WHERE stu_id = ? || dst_stu = ? ) ) ) ))"
+	type t struct {
+		Size int64 `gorm:"column:size"`
+	}
+	var tmp t
+	u.getDb().Raw(sql, u.Id, stuId, stuId, stuId, stuId).Scan(&tmp)
+	return true, tmp.Size
+}
+
 func (u *Dorm) SelectOrderSize() (bool, int64) {
 	sql := "select count(*) as size from `order` where dorm_id = ?"
 	type t struct {

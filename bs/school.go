@@ -2,6 +2,7 @@ package bs
 
 import (
 	"github.com/jinzhu/gorm"
+	"ny2/bs/entity"
 	"ny2/db"
 )
 
@@ -33,4 +34,18 @@ func (s *School) SelectSchoolAllDorm() (bool, []Dorm) {
 	sql := `select id ,school_id,dorm_name,dorm_longitude,dorm_latitude from dorm where school_id = ?`
 	err := s.getDb().Raw(sql, s.Id).Scan(&r).Error
 	return err == nil, r
+}
+
+func (s *School) SelectSchoolAllCanteen() (bool, []entity.Canteen) {
+	var c []entity.Canteen
+	sql := `select * from canteen where school_id = ?`
+	err := s.getDb().Raw(sql, s.Id).Scan(&c).Error
+	return err == nil, c
+}
+
+func (s *School) SelectSchoolAllShop() (bool, []entity.Shop) {
+	var c []entity.Shop
+	sql := `select * from shop where school_id = ?`
+	err := s.getDb().Raw(sql, s.Id).Scan(&c).Error
+	return err == nil, c
 }

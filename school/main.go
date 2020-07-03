@@ -13,6 +13,26 @@ func Register(engine *gin.Engine) {
 			errCode, data := getAllSchool()
 			gerr.SetResponse(context, errCode, &data)
 		})
+		s.GET("canteen/list", func(context *gin.Context) {
+			schoolId := context.Query("school_id")
+			schoolIdInt, err := strconv.Atoi(schoolId)
+			if err != nil {
+				gerr.SetResponse(context, gerr.UnKnow, nil)
+				return
+			}
+			errCode, data := getSchoolCanteen(int64(schoolIdInt))
+			gerr.SetResponse(context, errCode, &data)
+		})
+		s.GET("shop/list", func(context *gin.Context) {
+			schoolId := context.Query("school_id")
+			schoolIdInt, err := strconv.Atoi(schoolId)
+			if err != nil {
+				gerr.SetResponse(context, gerr.UnKnow, nil)
+				return
+			}
+			errCode, data := getSchoolShop(int64(schoolIdInt))
+			gerr.SetResponse(context, errCode, &data)
+		})
 		s.GET("dorm", func(context *gin.Context) {
 			schoolId := context.Query("school_id")
 			schoolIdInt, err := strconv.Atoi(schoolId)

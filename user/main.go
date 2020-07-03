@@ -16,7 +16,39 @@ func Register(engine *gin.Engine) {
 
 	u := engine.Group("user")
 	{
-		u.POST("recv", func(context *gin.Context) {
+
+		u.POST("/block", func(context *gin.Context) {
+			if ok, data := utils.GetRawData(context); ok {
+				stuId := gjson.Get(data, "stu_id").Int()
+				dstStuId := gjson.Get(data, "dst_stu").Int()
+				errCode := blockStu(stuId, dstStuId)
+				gerr.SetResponse(context, errCode, nil)
+				return
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
+		u.GET("/block/list", func(context *gin.Context) {
+			stuId := context.Query("stu_id")
+			stuIdInt, err := strconv.Atoi(stuId)
+			if err == nil {
+				errCode, data := getBlockList(int64(stuIdInt))
+				gerr.SetResponse(context, errCode, &data)
+				return
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
+		u.DELETE("/block/detach", func(context *gin.Context) {
+			if ok, data := utils.GetRawData(context); ok {
+				stuId := gjson.Get(data, "stu_id").Int()
+				dstStuId := gjson.Get(data, "dst_stu").Int()
+				errCode := removeOutBlockList(stuId, dstStuId)
+				gerr.SetResponse(context, errCode, nil)
+				return
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
+
+		u.POST("/order/recv", func(context *gin.Context) {
 
 			if ok, data := utils.GetRawData(context); ok {
 				orderId := gjson.Get(data, "order_id").Int()
@@ -42,11 +74,30 @@ func Register(engine *gin.Engine) {
 				orderEndTime := gjson.Get(data, "end_time").Int()
 				orderComment := gjson.Get(data, "comment").String()
 				orderTemplateId := gjson.Get(data, "template_id").String()
+				shopId := gjson.Get(data, "shop_id").Int()
+				canteenId := gjson.Get(data, "canteen_id").Int()
+				var placeId int64
+				if shopId != 0 {
+					placeId = shopId
+				} else if canteenId != 0 {
+					placeId = canteenId
+				}
 				fmt.Println(orderType, orderPrice, orderEndTime, orderComment)
 
-				errCode := sendOrder(int(orderType), stuId, orderPrice, time.Unix(orderEndTime/1000, 0), orderComment, orderTemplateId)
+				errCode := sendOrder(int(orderType), stuId, orderPrice, time.Unix(orderEndTime/1000, 0), orderComment, orderTemplateId, placeId)
 				gerr.SetResponse(context, errCode, nil)
 				return
+			}
+			gerr.SetResponse(context, gerr.UnKnow, nil)
+		})
+		u.PUT("order/finish", func(context *gin.Context) {
+
+			if ok, data := utils.GetRawData(context); ok {
+				orderId := gjson.Get(data, "order_id").Int()
+				errCode := setOrderFinish(int64(orderId))
+				gerr.SetResponse(context, errCode, nil)
+				return
+
 			}
 			gerr.SetResponse(context, gerr.UnKnow, nil)
 		})

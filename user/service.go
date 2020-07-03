@@ -43,7 +43,14 @@ func getStuMsg(stuIdA int64, stuIdB int64, limit int) (int, string) {
 				md.MsgId = d.Id
 				md.StuId = stuIdA
 				md.IsRead = true
+
 				u.InsertMsgDetail(&md)
+
+				md.SelectById()
+				md.MsgId = d.Id
+				md.StuId = stuIdA
+				md.IsRead = true
+				md.Update()
 			}
 		}()
 
@@ -61,6 +68,9 @@ func sendTxtMessage(senderStuId int64, recipientStuId int64, content string) int
 		RecipientStu: recipientStuId,
 		Content:      content,
 		Type:         "txt",
+	}
+	if s.IsBeDstBlock(recipientStuId) {
+		return gerr.InBlock
 	}
 	r := s.InsertMsg(&m)
 
@@ -104,7 +114,7 @@ func getSimpleInfoByStuId(stuId int64) (int, string) {
 	return getSimpleInfoByOpenId(u.Us.OpenId)
 }
 
-func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comment string, templateId string) int {
+func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comment string, templateId string, placeId int64) int {
 	var o entity.Order
 	var s bs.Stu
 	s.StuId = stuId
@@ -123,7 +133,7 @@ func sendOrder(orderType int, stuId int64, price string, endTime time.Time, comm
 	o.AvatarUrl = s.Us.AvatarUrl
 	typeStr := strconv.Itoa(orderType)
 	o.Type = typeStr
-
+	o.PlaceId = placeId
 	r = s.InsertOrder(&o)
 	if r {
 		return gerr.Ok
@@ -249,6 +259,7 @@ func getStuPreOrder(stuId int64, limit int64, offset int64) (int, string) {
 		Dorm       string     `json:"dorm"`
 		Cancel     bool       `json:"cancel"`
 		RecvStu    int64      `json:"recv_stu"`
+		Finish     bool       `json:"finish"`
 	}
 	var tmp []t
 	for _, v := range data {
@@ -258,6 +269,7 @@ func getStuPreOrder(stuId int64, limit int64, offset int64) (int, string) {
 		k.Type = v.Type
 		k.AvatarUrl = v.AvatarUrl
 		k.OrderId = v.Id
+		k.Finish = v.Finish
 		if v.StuId != 0 {
 			k.StuId = v.StuId
 		}
@@ -295,6 +307,7 @@ func getOrderDetail(orderId int64) (int, string) {
 	type t struct {
 		entity.Order
 		DormName string `json:"dorm_name"`
+		Place    string `json:"place"`
 	}
 	var tmp t
 	var dm bs.Dorm
@@ -302,6 +315,7 @@ func getOrderDetail(orderId int64) (int, string) {
 	dm.SelectById()
 	tmp.DormName = dm.DormName
 	tmp.Order = o
+	tmp.Place = o.SelectPlaceName()
 
 	if r {
 		if bytes, err := json.Marshal(tmp); err == nil {
@@ -309,6 +323,22 @@ func getOrderDetail(orderId int64) (int, string) {
 		}
 	}
 	return gerr.UnKnow, utils.EmptyString
+}
+
+// 设置订单完成状态
+func setOrderFinish(orderId int64) int {
+	var o entity.Order
+	o.Id = orderId
+	r := o.SelectById()
+	if !r {
+		return gerr.UNKnowOrder
+	}
+	o.Finish = true
+	r = o.Update()
+	if r {
+		return gerr.Ok
+	}
+	return gerr.UnKnow
 }
 
 // 修改订单的接收者
@@ -344,6 +374,66 @@ func cancelOrder(orderId int64, stuId int64) int {
 	o.Cancel = true
 	r = o.Update()
 	if r {
+		return gerr.Ok
+	}
+	return gerr.UnKnow
+}
+
+// 拉黑对方
+func blockStu(stuId int64, dstStu int64) int {
+	var b entity.Block
+	b.StuId = stuId
+	b.DstStu = dstStu
+	if b.Insert() {
+		return gerr.Ok
+	}
+	return gerr.UnKnow
+}
+
+// 是否被对方拉黑了
+func isBeBlock(stuId int64, dstStu int64) int {
+	var u bs.Stu
+	u.StuId = stuId
+	if u.IsBeDstBlock(dstStu) {
+		return gerr.Ok
+	}
+	return gerr.UnKnow
+}
+
+// 获取的拉黑好友列表
+func getBlockList(stuId int64) (int, string) {
+	var s bs.Stu
+	s.StuId = stuId
+	r, data := s.SelectBlockList()
+
+	type tmp struct {
+		StuId     int64  `json:"stu_id"`
+		AvatarUrl string `json:"avatar_url"`
+		NickName  string `json:"nick_name"`
+	}
+	var t []tmp
+	for _, v := range data {
+		var tm tmp
+		v.SelectByStuId()
+		tm.StuId = v.StuId
+		tm.AvatarUrl = v.Us.AvatarUrl
+		tm.NickName = v.Us.NickName
+
+		t = append(t, tm)
+	}
+	if r {
+		if bytes, err := json.Marshal(t); err == nil {
+			return gerr.Ok, string(bytes)
+		}
+	}
+	return gerr.UnKnow, utils.EmptyString
+}
+
+// 将dstStu移除stuId的黑名单列表
+func removeOutBlockList(stuId int64, dstStu int64) int {
+	var u bs.Stu
+	u.StuId = stuId
+	if u.DeleteOutBlockList(dstStu) {
 		return gerr.Ok
 	}
 	return gerr.UnKnow

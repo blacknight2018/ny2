@@ -27,7 +27,7 @@ func TlsHandler() gin.HandlerFunc {
 }
 
 func main() {
-	g := gin.Default()
+	g := gin.New()
 	g.Use(TlsHandler())
 	dorm.Register(g)
 	school.Register(g)

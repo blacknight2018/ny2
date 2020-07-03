@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/jinzhu/gorm"
 	"ny2/db"
+	"strconv"
 	"time"
 )
 
@@ -29,6 +30,8 @@ type Order struct {
 	AvatarUrl  string     `json:"avatar_url";gorm:"column:avatar_url;NOT NULL;"`
 	TemplateId string     `json:"-";gorm:"column:template_id;NOT NULL;"`
 	Cancel     bool       `json:"cancel";gorm:"column:cancel;"`
+	Finish     bool       `json:"finish";gorm:"column:finish;"`
+	PlaceId    int64      `json:"place_id";gorm:"column:place_id;"`
 }
 
 func (u *Order) getDb() *gorm.DB {
@@ -49,4 +52,20 @@ func (u *Order) SelectById() bool {
 
 func (u *Order) Update() bool {
 	return nil == u.getDb().Table("order").Save(&u).Error
+}
+
+func (u *Order) SelectPlaceName() string {
+	var str string
+	if u.Type == strconv.Itoa(Food) {
+		var c Canteen
+		c.Id = u.PlaceId
+		c.SelectById()
+		str = c.Name
+	} else if u.Type == strconv.Itoa(Buy) {
+		var s Shop
+		s.Id = u.PlaceId
+		s.SelectById()
+		str = s.Name
+	}
+	return str
 }
