@@ -295,8 +295,9 @@ func (u *Stu) SelectOrderByStuId(limit int64, offset int64) (bool, []entity.Orde
 // 是否是拉黑关系
 
 func (u *Stu) IsBeDstBlock(dstStu int64) bool {
+	var b entity.Block
 	sql := `select * from block where (stu_id = ? && dst_stu = ?)||(stu_id = ? && dst_stu = ?)`
-	return nil == u.getDb().Raw(sql, u.StuId, dstStu, dstStu, u.StuId).Error
+	return !u.getDb().Raw(sql, u.StuId, dstStu, dstStu, u.StuId).Scan(&b).RecordNotFound()
 }
 
 // 获取我拉黑的列表

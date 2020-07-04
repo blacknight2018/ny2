@@ -63,6 +63,7 @@ func getStuMsg(stuIdA int64, stuIdB int64, limit int) (int, string) {
 
 func sendTxtMessage(senderStuId int64, recipientStuId int64, content string) int {
 	var s bs.Stu
+	s.StuId = senderStuId
 	m := entity.Msg{
 		SenderStu:    senderStuId,
 		RecipientStu: recipientStuId,
